@@ -11,4 +11,4 @@ Partecipanti:
 * Andrea
 * Nadir
 
-www.casacorsini.mo.it
+http://www.casacorsini.mo.it/wp-content/uploads/2018/09/INTERABITAZIONE-condiviso-low.pdf
