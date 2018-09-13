@@ -14,7 +14,4 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 ## Descrizione del progetto
 
 
-## Architettura generale
-
-
 http://www.casacorsini.mo.it/wp-content/uploads/2018/09/INTERABITAZIONE-condiviso-low.pdf
