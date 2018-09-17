@@ -9,7 +9,7 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 * Lorenzo Vandelli
 * Alberto Trentadue
 * Andrea
-* Nadir
+* Nadir Abdelmjid
 
 ## Descrizione del progetto
 
