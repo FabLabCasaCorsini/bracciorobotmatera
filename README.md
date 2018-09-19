@@ -8,7 +8,12 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 * Caterina Bonora
 * Lorenzo Vandelli
 * Alberto Trentadue
-* Andrea
+* Andrea Forlani
+* Francesco Finotti
+* Doriano Dalpiaz
+* Augusto Maffei
+* Francesco Annovi
+* Alessandro Appeddu
 * Nadir Abdelmjid
 
 ## Descrizione del progetto
