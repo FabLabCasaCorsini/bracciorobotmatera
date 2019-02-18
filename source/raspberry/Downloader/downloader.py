@@ -9,8 +9,9 @@ import urllib.request
 from pathlib import Path
 import time, signal, sys
 import logging
+from logging.handlers import TimedRotatingFileHandler
 
-folderPath = "/home/ale/gcodes/"
+folderPath = "/opt/fanny/Downloader/"
 baseUrl = 'http://www.appius.it/matera/'
 gcodesFolder = 'gcodes/'
 fileListUrl = 'gcode_files'
@@ -30,7 +31,8 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Logging
 logger = logging.getLogger('Fanny.Downloader')
-log_hdlr = logging.StreamHandler(sys.stdout)
+#log_hdlr = logging.StreamHandler(sys.stdout)
+log_hdlr = TimedRotatingFileHandler('/opt/fanny/Downloader/downloader.log', 'D', 1, 1)
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 log_hdlr.setFormatter(formatter)
 logger.addHandler(log_hdlr)
@@ -44,7 +46,7 @@ def main_task():
 
     while keep_on:
 
-        time.sleep(2)
+        time.sleep(5)
         try:
             logger.info('Lettura lista file da:' + baseUrl + fileListUrl)
             page = urllib.request.urlopen(baseUrl + fileListUrl)
