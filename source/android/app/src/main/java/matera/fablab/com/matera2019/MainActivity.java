@@ -1,15 +1,21 @@
 package matera.fablab.com.matera2019;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Point;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -48,72 +54,128 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
         clearBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mySurfaceView.clearAll();
+
+
+                new AlertDialog.Builder(_context)
+                        .setTitle("Matera 2019")
+                        .setMessage("Cancellare il disegno?")
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                mySurfaceView.clearAll();
+                            }})
+                        .setNegativeButton("No", null).show();
+
             }
         });
 
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ArrayList<ArrayList<Point>> lines = mySurfaceView.getPicture();
-
-                int dimensioneX = 100;
-                int dimensioneY = 100;
-
-                int maxValueX = 0;
-                int maxValueY = 0;
-                int minValueX = 999999;
-                int minValueY = 999999;
-
-                for (ArrayList<Point> line : lines) {
-                    for (Point p : line){
-                        if (p.x > maxValueX) maxValueX = p.x;
-                        if (p.y > maxValueY) maxValueY = p.y;
-                        if (p.x < minValueX) minValueX = p.x;
-                        if (p.y < minValueY) minValueY = p.y;
-                    }
-                }
-
-                ArrayList<ArrayList<FloatPoint>> normalizedLines = new ArrayList<>();
-                for (ArrayList<Point> line : lines) {
-                    ArrayList<FloatPoint> normalizedLine = new ArrayList<>();
-                    for (Point p : line){
-                        FloatPoint normalizedPoint = new FloatPoint();
-                        normalizedPoint.x = ((float)(p.x - minValueX) / (maxValueX - minValueX)) * dimensioneX;
-                        normalizedPoint.y = ((float)(p.y - minValueY) / (maxValueY - minValueY)) * dimensioneY;
-                        normalizedLine.add(normalizedPoint);
-                    }
-                    normalizedLines.add(normalizedLine);
-                }
 
 
-                String strPoint = "";
+                new AlertDialog.Builder(_context)
+                        .setTitle("Matera 2019")
+                        .setMessage("Salvare il disegno?")
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
-                for (ArrayList<FloatPoint> l : normalizedLines){
-                    if (strPoint.length() > 0)
-                        strPoint += lineSeparator;
-                    String line = "";
-                    for (FloatPoint p : l){
-                        if (line.length() > 0)
-                            line += pointSeparator;
-                        line += Float.toString(p.x) + pointSeparator + Float.toString(p.y);
-                    }
-                    strPoint += line;
-                }
+                            public void onClick(DialogInterface dialog, int whichButton) {
 
-                final List<NameValuePair> nameValuePairs = new ArrayList<>();
-                nameValuePairs.add(new BasicNameValuePair("points", strPoint));
 
-                Thread networkThread = new Thread(){
+                                AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+                                builder.setTitle("Inserisci un titolo");
 
-                    @Override
-                    public void run() {
-                        super.run();
-                        HttpCall.loadUrl(_context, urlSave, nameValuePairs);
-                    }
-                };
+                                final EditText input = new EditText(_context);
+                                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                                builder.setView(input);
 
-                networkThread.start();
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        final String title = input.getText().toString();
+
+                                        ArrayList<ArrayList<Point>> lines = mySurfaceView.getPicture();
+
+                                        int dimensioneX = 100;
+                                        int dimensioneY = 100;
+
+                                        int maxValueX = 0;
+                                        int maxValueY = 0;
+                                        int minValueX = 999999;
+                                        int minValueY = 999999;
+
+                                        for (ArrayList<Point> line : lines) {
+                                            for (Point p : line){
+                                                if (p.x > maxValueX) maxValueX = p.x;
+                                                if (p.y > maxValueY) maxValueY = p.y;
+                                                if (p.x < minValueX) minValueX = p.x;
+                                                if (p.y < minValueY) minValueY = p.y;
+                                            }
+                                        }
+
+                                        ArrayList<ArrayList<FloatPoint>> normalizedLines = new ArrayList<>();
+                                        for (ArrayList<Point> line : lines) {
+                                            ArrayList<FloatPoint> normalizedLine = new ArrayList<>();
+                                            for (Point p : line){
+                                                FloatPoint normalizedPoint = new FloatPoint();
+                                                normalizedPoint.x = ((float)(p.x - minValueX) / (maxValueX - minValueX)) * dimensioneX;
+                                                normalizedPoint.y = ((float)(p.y - minValueY) / (maxValueY - minValueY)) * dimensioneY;
+                                                normalizedLine.add(normalizedPoint);
+                                            }
+                                            normalizedLines.add(normalizedLine);
+                                        }
+
+
+                                        String strPoint = "";
+
+                                        for (ArrayList<FloatPoint> l : normalizedLines){
+                                            if (strPoint.length() > 0)
+                                                strPoint += lineSeparator;
+                                            String line = "";
+                                            for (FloatPoint p : l){
+                                                if (line.length() > 0)
+                                                    line += pointSeparator;
+                                                line += Float.toString(p.x) + pointSeparator + Float.toString(p.y);
+                                            }
+                                            strPoint += line;
+                                        }
+
+                                        final List<NameValuePair> nameValuePairs = new ArrayList<>();
+                                        nameValuePairs.add(new BasicNameValuePair("title", title));
+                                        nameValuePairs.add(new BasicNameValuePair("points", strPoint));
+
+                                        Thread networkThread = new Thread(){
+
+                                            @Override
+                                            public void run() {
+                                                super.run();
+                                                HttpCall.loadUrl(_context, urlSave, nameValuePairs);
+                                            }
+                                        };
+
+                                        networkThread.start();
+
+                                    }
+                                });
+                                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.cancel();
+                                    }
+                                });
+
+                                builder.show();
+
+
+
+
+
+                            }})
+                        .setNegativeButton("No", null).show();
+
+
             }
         });
 
@@ -129,6 +191,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
             @Override
             public void onClick(View view) {
 
+                Intent i = new Intent(_context, FilesListActivity.class);
+                startActivity(i);
 
             }
         });
