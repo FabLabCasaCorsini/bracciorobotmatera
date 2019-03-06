@@ -1,16 +1,21 @@
 package matera.fablab.com.matera2019;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 /**
  * Created by Alessandro on 12/06/2018.
@@ -21,6 +26,49 @@ public class MySurfaceView extends SurfaceView {
     SurfaceHolder holder;
     Paint paint;
     Context _context;
+
+    ArrayList<ArrayList<Point> > linesList = new ArrayList<>();
+    ArrayList<Point> currentLine;
+
+
+    public void importPictureFile(String fileSource){
+
+        linesList.clear();
+
+        String strLines[] = fileSource.split(Pattern.quote("$$"));
+        for (String line : strLines){
+
+            ArrayList<Point> tmpLine = new ArrayList<>();
+            String points[] = line.split("-");
+            for(int i = 0; i < points.length; i += 2){
+
+                try {
+                    Integer x = (int) Float.parseFloat(points[i]);
+                    Integer y = (int) Float.parseFloat(points[i + 1]);
+                    Point tmpPoint = new Point();
+                    tmpPoint.x = x;
+                    tmpPoint.y = y;
+
+                    tmpLine.add(tmpPoint);
+                }catch(Exception e){}
+            }
+            linesList.add(tmpLine);
+        }
+
+
+        Handler mainHandler = new Handler(_context.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+
+                invalidate();
+
+            }
+        };
+        mainHandler.post(myRunnable);
+
+    }
 
     public MySurfaceView(Context context) {
         super(context);
@@ -62,8 +110,6 @@ public class MySurfaceView extends SurfaceView {
         }
     }
 
-    ArrayList<ArrayList<Point> > linesList = new ArrayList<>();
-    ArrayList<Point> currentLine;
 
     boolean isDrawing = false;
 

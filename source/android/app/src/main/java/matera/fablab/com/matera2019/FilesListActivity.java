@@ -52,6 +52,14 @@ public class FilesListActivity extends Activity {
                                 @Override
                                 public void onClick(View view) {
 
+
+                                    String fileName = line;
+                                    fileName = fileName.replace("gcode", "coord");
+
+                                    Intent i = new Intent(_context, MainActivity.class);
+                                    i.putExtra("fileName", fileName);
+                                    startActivity(i);
+
                                 }
                             });
 

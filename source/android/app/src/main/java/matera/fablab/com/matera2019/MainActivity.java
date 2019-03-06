@@ -130,7 +130,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 
                                         String strPoint = "";
 
-                                        for (ArrayList<FloatPoint> l : normalizedLines){
+//TODO
+// Nel caso servisse la normalizzazione delle coordinate
+// recuperare questo pezzo di codice
+
+  /*                                      for (ArrayList<FloatPoint> l : normalizedLines){
                                             if (strPoint.length() > 0)
                                                 strPoint += lineSeparator;
                                             String line = "";
@@ -141,6 +145,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
                                             }
                                             strPoint += line;
                                         }
+*/
+
+                                        for (ArrayList<Point> l : lines){
+                                            if (strPoint.length() > 0)
+                                                strPoint += lineSeparator;
+                                            String line = "";
+                                            for (Point p : l){
+                                                if (line.length() > 0)
+                                                    line += pointSeparator;
+                                                line += Float.toString(p.x) + pointSeparator + Float.toString(p.y);
+                                            }
+                                            strPoint += line;
+                                        }
+
+
 
                                         final List<NameValuePair> nameValuePairs = new ArrayList<>();
                                         nameValuePairs.add(new BasicNameValuePair("title", title));
@@ -168,10 +187,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 
                                 builder.show();
 
-
-
-
-
                             }})
                         .setNegativeButton("No", null).show();
 
@@ -196,6 +211,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 
             }
         });
+
+        Intent intent = getIntent();
+        final String fileName = intent.getStringExtra("fileName");
+        if (fileName != null){
+
+            Thread networkThread = new Thread() {
+
+                @Override
+                public void run() {
+                    super.run();
+                    String res = HttpCall.loadUrl(_context, "http://www.appius.it/matera/gcodes/" + fileName, false);
+                    mySurfaceView.importPictureFile(res);
+                }
+            };
+
+            networkThread.start();
+
+        }
     }
 
     @Override
