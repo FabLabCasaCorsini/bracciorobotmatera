@@ -37,8 +37,8 @@ void setup() {
   pinMode(M4PLUS, OUTPUT);
   pinMode(M4MINUS, OUTPUT);
 
-  pinMode(CONTROL_FWD, INPUT);
-  pinMode(CONTROL_BWD, INPUT);
+  pinMode(CONTROL_FWD, INPUT_PULLUP);
+  pinMode(CONTROL_BWD, INPUT_PULLUP);
   //parte da fermo
   attua_stato(STOP);
 }
