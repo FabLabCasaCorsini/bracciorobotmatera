@@ -46,6 +46,33 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:id="@+id/newBtn"
+            android:padding="10dp"
+            >
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/new_icon"
+                android:adjustViewBounds="true"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="New"
+                android:textColor="#222222"
+                android:padding="5dp"
+                android:textAlignment="center"
+                />
+        </LinearLayout>
+
+
+
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:id="@+id/saveBtn"
             android:padding="10dp"
             >
@@ -104,7 +131,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:src="@drawable/undo"
+                android:src="@drawable/db_icon"
                 android:adjustViewBounds="true"
                 />
 

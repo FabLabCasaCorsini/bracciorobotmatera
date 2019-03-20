@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import org.apache.http.NameValuePair;
@@ -43,10 +45,14 @@ public class FilesListActivity extends Activity {
 
                             String splittedLine[] = line.split("-_-");
                             String fileName = splittedLine[0];
-                            TextView textView = new TextView(_context);
+
+                            LayoutInflater inflater = (LayoutInflater)getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                            RelativeLayout textItemView = (RelativeLayout) inflater.inflate(R.layout.file_item, null);
+
+                            TextView textView = textItemView.findViewById(R.id.textItem);
                             textView.setText(fileName);
 
-                            filesListLayout.addView(textView);
+                            filesListLayout.addView(textItemView);
 
                             textView.setOnClickListener(new View.OnClickListener() {
                                 @Override
