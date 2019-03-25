@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 """
- Braccio Robotico Matera
+ Braccio Robotico Matera - Fanny
  Downloader daemon
 """
 
 import urllib.request
 from pathlib import Path
-import time, signal, sys
+import time, signal
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-folderPath = "/opt/fanny/Downloader/"
+folderPath = "/opt/fanny/Downloader/dwgs/"
 baseUrl = 'http://www.appius.it/matera/'
 gcodesFolder = 'gcodes/'
 fileListUrl = 'gcode_files'
