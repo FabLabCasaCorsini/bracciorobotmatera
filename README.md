@@ -15,7 +15,6 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 * Francesco Annovi
 * Alessandro Appeddu
 * Nadir Abdelmjid
-* Davide Gariselli
 * Luca Bazzucchi
 
 ## Descrizione del progetto
