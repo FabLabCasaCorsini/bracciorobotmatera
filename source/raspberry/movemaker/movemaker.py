@@ -7,8 +7,10 @@
  Il MoveMaker si occupa di:
      - Controllare GRBL sull'arduino di controllo del braccio
      - Controllare il movimento delle ruote via Arduino Taxi
+     
+ Attenzione: richiede la libreria pySerial
 """
-import signal, time
+import sys, signal, time, serial
 from pathlib import Path
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -17,6 +19,8 @@ import DrawingJob
 
 DL_FOLDER_PATH = '/opt/fanny/Downloader/dwgs/'
 FIX_FOLDER_PATH = '/opt/fanny/MoveMaker/dwgs/'
+SERIAL_PORT = '/dev/ttyUSB0'
+serial_if = None
 
 #La coda dei disegni
 coda_drawings_dl = []
@@ -48,39 +52,39 @@ logger.setLevel(loglevel)
 
 
 """
- Carica la lista dei disegni precaricati
+ Apre la connessione seriale verso GRBL
+ Se la connessione non può essere stabilita, esce
 """
-def carica_lista_fissa():
-    global lista_drawings_fissa
-    fix_path = Path(FIX_FOLDER_PATH)
-    for f in fix_path.iterdir():        
-        if f.suffix == '.gcode':
-            #Crea un oggetto Drawingjob
-            dwg = DrawingJob(f)
-            lista_drawings_fissa.append(dwg)
-            
-    logger.info('Trovati '+ len(lista_drawings_fissa) + ' disegni precaricati' )
+def crea_seriale():
+    global serial_if     
+    try:
+        # Open the serial communication
+        serial_if = serial.Serial(port=SERIAL_PORT, baudrate=115200)
+        logger.info('Porta seriale ' + SERIAL_PORT + ' collegata.')
+    except:
+        # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
+        logger.error('Errore in apertura seriale: ' + str(sys.exc_info()[1]) + '. Uscita.')        
+        sys.exit(1)
 
 """
- Carica la coda dei disegni scaricati
+ Carica una lista di disegni da una directory
 """
-def carica_coda_downloads():
-    global coda_drawings_dl
-    dl_path = Path(DL_FOLDER_PATH)
-    for f in dl_path.iterdir():
+def carica_lista(lst, loc):
+    files_path = Path(loc)
+    for f in files_path.iterdir():        
         if f.suffix == '.gcode':
             #Crea un oggetto Drawingjob
             dwg = DrawingJob(f)
-            coda_drawings_dl.append(dwg)
-    
-    logger.info('Trovati '+ len(coda_drawings_dl) + ' disegni scaricati' )
+            lst.append(dwg)
+            
+    logger.info('Trovati ' + len(lst) + ' files .gcode in ' + loc )
 
 """
  Muove il carrello nella posizione puntata dalla variabile 'posizione_carrello'
 """
 def muovi_carrello():
     global posizione_carrello
-    #1. Muove il carrello nella posizione libera
+    
     if posizione_carrello == 1:
         posizione_carrello = 0
     else:
@@ -92,20 +96,41 @@ def muovi_carrello():
 
 """
  Legge un file GCODE del disegno ed invia i comandi a GRBL
- attraverso la seriale (USB)
+ attraverso la seriale 
 """
 def invia_gcode_grbl(dwg):
-    ###
-    ### Codice dell'invio del GCODE a GRBL
-    ###
-    logger.info('Invio codici GCODE per il disegno ' + dwg.getGCodeName())
+    try:
+        #Carica le linee dal file
+        linee_gcode = dwg.getGCodeFileLines()
+    except:
+        # Se c'è errore, non è stato possibile legggere il file, per cui viene annullato
+        logger.error('Errore nel caricamento del file ' + str(dwg.getGCodePath()) + ':' + str(sys.exc_info()[1]))
+        return
+    
+    if len(linee_gcode):
+        logger.info('Invio codici GCODE per il disegno ' + dwg.getGCodeName())    
+        #Viene inviata ciascuna linea alla seriale, terminata da NEWLINE
+        for linea in linee_gcode:
+            linea += '\n'
+            try:
+                serial_if.write(linea)
+                serial_if.flush()
+            except:
+                # Se c'è errore, bisogna purtroppo terminare il programma per riavviarlo
+                logger.error('Errore in scrittura della seriale:' + str(sys.exc_info()[1]) + '. Uscita.')
+                sys.exit(1)
+            
+        logger.info('Invio codici GCODE per il disegno ' + dwg.getGCodeName() + ' terminato.')    
+    else:
+        logger.warning('Il file disegno ' + dwg.getGCodeName() + ' non ha contenuto.')    
 
 """
- Processa un disegno, posizionando il carrello e poi
- muovedo il braccio
+ Processa un disegno, posizionando il carrello e poi muovedo il braccio
 """
 def processa_disegno(dwg):
+    #1. Muove il carrello nella posizione libera
     muovi_carrello()
+    time.sleep(1)
     #2. Esegue il disegno inviando i codici a GRBL
     invia_gcode_grbl(dwg)        
 
@@ -114,13 +139,17 @@ def processa_disegno(dwg):
 """
 def main_task():
     global coda_drawings_dl, lista_drawings_fissa
+    
+    #Connessione seriale
+    crea_seriale()
     #Caricamento della lista dei disegni precaricati dalla directory 
-    carica_lista_fissa()
+    carica_lista(lista_drawings_fissa, FIX_FOLDER_PATH)
+    NUM_DWGS_LISTA_FISSA = len(lista_drawings_fissa)
     indice_lista_fissa = 0
     
     while keep_on:
         #Caricamento della coda dei disegni dalla directory dei downloads
-        carica_coda_downloads()        
+        carica_lista(coda_drawings_dl, DL_FOLDER_PATH)        
         while len(coda_drawings_dl):
             #processa il prossimo disegno dei download
             dwg = coda_drawings_dl[0]
@@ -133,13 +162,15 @@ def main_task():
             coda_drawings_dl.remove(0)
             time.sleep(3)
         
-        #A fine downloads, processa il prossimo disegno della lista fissa
-        dwg = lista_drawings_fissa[indice_lista_fissa]
-        logger.info('Inizio esecuzione disegno precaricato ' + dwg.getGCodeName())
-        processa_disegno(dwg)
-        logger.info('Esecuzione disegno precaricato ' + dwg.getGCodeName() + ' terminata')
-        indice_lista_fissa += 1
-        indice_lista_fissa %= len(lista_drawings_fissa)        
+        if NUM_DWGS_LISTA_FISSA:
+            #A fine downloads, processa il prossimo disegno della lista fissa
+            dwg = lista_drawings_fissa[indice_lista_fissa]
+            logger.info('Inizio esecuzione disegno precaricato ' + dwg.getGCodeName())
+            processa_disegno(dwg)
+            logger.info('Esecuzione disegno precaricato ' + dwg.getGCodeName() + ' terminata')
+            indice_lista_fissa += 1
+            indice_lista_fissa %= NUM_DWGS_LISTA_FISSA        
+            
         time.sleep(3)
 
 #Avvio del task principale.
@@ -147,4 +178,4 @@ def main_task():
 logger.info('Avvio di Fanny.MoveMaker')
 main_task()
             
-print('Fanny.MoveMaker terminato.')
+print('Fanny.MoveMaker esecuzione terminata.')
