@@ -5,6 +5,7 @@ Classe DrawingJob
 La classe DrawingJob rappresenta un attività di disegno da realizzare
 attraverso il controllo del braccio
 """
+from pathlib import Path
 
 class DrawingJob:
     
@@ -38,6 +39,14 @@ class DrawingJob:
             # Pulizia delle linee
             content = [x.strip() for x in content]
         return content
+
+    """
+     Sposta il file associato a questo drawing in una directory
+    """    
+    def moveGCodeFile(self, path_dest):
+        dp = Path(path_dest).joinpath(self.gcodepath.name)
+        self.gcodepath.rename(dp)
+        
             
     """
      Cancella il file associato a questo drawing.

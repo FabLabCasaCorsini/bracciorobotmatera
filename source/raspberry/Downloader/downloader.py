@@ -11,13 +11,12 @@ import time, signal
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-folderPath = "/opt/fanny/Downloader/dwgs/"
-baseUrl = 'http://www.appius.it/matera/'
-gcodesFolder = 'gcodes/'
-fileListUrl = 'gcode_files'
+FOLDER_PATH = '/opt/fanny/Drawings/downloads/'
+BASE_URL = 'http://www.appius.it/matera/'
+GCODE_FOLDER = 'gcodes/'
+FILE_LIST_URL = 'gcode_files'
 
 keep_on = True
-
 
 # Gestore dei segnali SIGTERM & SIGINT
 def signal_handler(_signo, _stack_frame):
@@ -48,8 +47,8 @@ def main_task():
 
         time.sleep(5)
         try:
-            logger.info('Lettura lista file da:' + baseUrl + fileListUrl)
-            page = urllib.request.urlopen(baseUrl + fileListUrl)
+            logger.info('Lettura lista file da:' + BASE_URL + FILE_LIST_URL)
+            page = urllib.request.urlopen(BASE_URL + FILE_LIST_URL)
             content = page.read()
             strContent = content.decode('utf-8')
             lines = strContent.splitlines()
@@ -59,17 +58,17 @@ def main_task():
                 if row == "":
                     continue
 
-                my_file = Path(folderPath + row)
+                my_file = Path(FOLDER_PATH + row)
                 if my_file.is_file():
                     logger.debug('File presente: '+row)                
                     continue;
 
-                tempUrl = baseUrl + gcodesFolder + row;    
+                tempUrl = BASE_URL + GCODE_FOLDER + row;    
                 logger.info('Richiesta download GCODE file: '+tempUrl)                
                 pageGcode = urllib.request.urlopen(tempUrl)
                 contentGcode = pageGcode.read()
                 logger.debug('File scaricato: '+row)
-                file = open(folderPath + row,"w")  
+                file = open(FOLDER_PATH + row,"w")  
                 file.write(contentGcode.decode('utf-8')) 
                 logger.debug('Scrittura completata: '+row)
                 file.close() 

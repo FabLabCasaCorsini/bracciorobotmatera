@@ -10,23 +10,25 @@
      
  Attenzione: richiede la libreria pySerial
 """
-import sys, signal, time, serial
+import sys, signal, time
 from pathlib import Path
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
 import DrawingJob
+import GCodeProcessor
+import CartMover
 
-DL_FOLDER_PATH = '/opt/fanny/Downloader/dwgs/'
-FIX_FOLDER_PATH = '/opt/fanny/MoveMaker/dwgs/'
-SERIAL_PORT = '/dev/ttyUSB0'
-serial_if = None
+gcode_proc = GCodeProcessor()
+cart_mover = CartMover()
+
+DL_FOLDER_PATH = '/opt/fanny/Drawings/downloads/'
+FIX_FOLDER_PATH = '/opt/fanny/Drawings/staged/'
+ARCHIVE_FOLDER_PATH = '/opt/fanny/Drawings/archived/'
 
 #La coda dei disegni
 coda_drawings_dl = []
 lista_drawings_fissa = []
-#sono previste due posizioni
-posizione_carrello = 0
 
 keep_on = True
 
@@ -34,7 +36,7 @@ keep_on = True
 def signal_handler(_signo, _stack_frame):
     global keep_on
     # Shutdown the processes
-    #print "Caught signal for shutdown: " + str(_signo)
+    #print('Caught signal for shutdown: ' + str(_signo))
     keep_on = False
 
 signal.signal(signal.SIGTERM, signal_handler)
@@ -52,21 +54,6 @@ logger.setLevel(loglevel)
 
 
 """
- Apre la connessione seriale verso GRBL
- Se la connessione non può essere stabilita, esce
-"""
-def crea_seriale():
-    global serial_if     
-    try:
-        # Open the serial communication
-        serial_if = serial.Serial(port=SERIAL_PORT, baudrate=115200)
-        logger.info('Porta seriale ' + SERIAL_PORT + ' collegata.')
-    except:
-        # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
-        logger.error('Errore in apertura seriale: ' + str(sys.exc_info()[1]) + '. Uscita.')        
-        sys.exit(1)
-
-"""
  Carica una lista di disegni da una directory
 """
 def carica_lista(lst, loc):
@@ -82,43 +69,33 @@ def carica_lista(lst, loc):
 """
  Muove il carrello nella posizione puntata dalla variabile 'posizione_carrello'
 """
-def muovi_carrello():
-    global posizione_carrello
-    
-    if posizione_carrello == 1:
-        posizione_carrello = 0
-    else:
-        posizione_carrello = 1
-    ###
-    ### Codice dello spostamento del carrello
-    ###
-    logger.info('Movimento carrello in posizione ' + str(posizione_carrello))
+def muovi_carrello():    
+    logger.info('Movimento carrello')
+    cart_mover.move()
+    logger.info('Carrello in posizione '+cart_mover.gerCartPosition())
 
 """
- Legge un file GCODE del disegno ed invia i comandi a GRBL
- attraverso la seriale 
+ Legge un file GCODE del disegno ed invia i comandi al processatore
 """
-def invia_gcode_grbl(dwg):
+def invia_gcode(dwg):
+    linee_gcode = []
     try:
         #Carica le linee dal file
         linee_gcode = dwg.getGCodeFileLines()
     except:
         # Se c'è errore, non è stato possibile legggere il file, per cui viene annullato
         logger.error('Errore nel caricamento del file ' + str(dwg.getGCodePath()) + ':' + str(sys.exc_info()[1]))
+        logger.warning('Non è stato possibile caricare il file ' + str(dwg.getGCodePath()))
         return
     
     if len(linee_gcode):
         logger.info('Invio codici GCODE per il disegno ' + dwg.getGCodeName())    
-        #Viene inviata ciascuna linea alla seriale, terminata da NEWLINE
-        for linea in linee_gcode:
-            linea += '\n'
-            try:
-                serial_if.write(linea)
-                serial_if.flush()
-            except:
-                # Se c'è errore, bisogna purtroppo terminare il programma per riavviarlo
-                logger.error('Errore in scrittura della seriale:' + str(sys.exc_info()[1]) + '. Uscita.')
-                sys.exit(1)
+        try:
+            gcode_proc.process(linee_gcode)   
+        except:
+            # Se c'è errore, bisogna purtroppo terminare il programma per riavviarlo
+            logger.error('Errore nel processamento GCODE:' + str(sys.exc_info()[1]) + '. Uscita.')
+            sys.exit(1)
             
         logger.info('Invio codici GCODE per il disegno ' + dwg.getGCodeName() + ' terminato.')    
     else:
@@ -132,7 +109,7 @@ def processa_disegno(dwg):
     muovi_carrello()
     time.sleep(1)
     #2. Esegue il disegno inviando i codici a GRBL
-    invia_gcode_grbl(dwg)        
+    invia_gcode(dwg)        
 
 """
  Task principale del daemon
@@ -140,8 +117,15 @@ def processa_disegno(dwg):
 def main_task():
     global coda_drawings_dl, lista_drawings_fissa
     
-    #Connessione seriale
-    crea_seriale()
+    #Inizializzazione connessione GCODE
+    try:
+        gcode_proc.connect()                        
+        logger.info('GCode Processor collegato.')
+    except:
+        # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
+        logger.error('Errore connessione GCode Processor:' + str(sys.exc_info()[1]) + '. Uscita.')        
+        sys.exit(1)
+    
     #Caricamento della lista dei disegni precaricati dalla directory 
     carica_lista(lista_drawings_fissa, FIX_FOLDER_PATH)
     NUM_DWGS_LISTA_FISSA = len(lista_drawings_fissa)
@@ -149,20 +133,21 @@ def main_task():
     
     while keep_on:
         #Caricamento della coda dei disegni dalla directory dei downloads
-        carica_lista(coda_drawings_dl, DL_FOLDER_PATH)        
-        while len(coda_drawings_dl):
-            #processa il prossimo disegno dei download
-            dwg = coda_drawings_dl[0]
-            logger.info('Inizio esecuzione disegno ' + dwg.getGCodeName())
-            processa_disegno(dwg)
-            logger.info('Esecuzione disegno ' + dwg.getGCodeName() + ' terminata')
-            #cancella il file dalla directory dei downloads
-            dwg.deleteGCodeFile()
-            #e poi lo rimuove dalla coda            
-            coda_drawings_dl.remove(0)
-            time.sleep(3)
-        
-        if NUM_DWGS_LISTA_FISSA:
+        carica_lista(coda_drawings_dl, DL_FOLDER_PATH)
+        if len(coda_drawings_dl):        
+            while len(coda_drawings_dl):
+                #processa il prossimo disegno dei download
+                dwg = coda_drawings_dl[0]
+                logger.info('Inizio esecuzione disegno ' + dwg.getGCodeName())
+                processa_disegno(dwg)
+                logger.info('Esecuzione disegno ' + dwg.getGCodeName() + ' terminata')
+                #cancella il file dalla directory dei downloads
+                dwg.moveGCodeFile(ARCHIVE_FOLDER_PATH)
+                #e poi lo rimuove dalla coda            
+                coda_drawings_dl.remove(0)
+                time.sleep(3)
+
+        elif NUM_DWGS_LISTA_FISSA:
             #A fine downloads, processa il prossimo disegno della lista fissa
             dwg = lista_drawings_fissa[indice_lista_fissa]
             logger.info('Inizio esecuzione disegno precaricato ' + dwg.getGCodeName())
@@ -174,8 +159,9 @@ def main_task():
         time.sleep(3)
 
 #Avvio del task principale.
-#Questa chiamata è bloccante fino alla chiusura del daemon
 logger.info('Avvio di Fanny.MoveMaker')
+#Questa chiamata è bloccante fino alla chiusura del daemon
 main_task()
-            
+#Rilascio risorse HW
+cart_mover.releaseHW()            
 print('Fanny.MoveMaker esecuzione terminata.')
