@@ -28,6 +28,10 @@ mkdir -p $BASE_DIR
 cd $BASE_DIR
 rm -rf Downloader
 rm -rf movemaker
+rm -f VERSION
+
+# Create the version file
+echo $VERSION_STRING > VERSION
 
 # Make the Drawings dirs
 mkdir -p Drawings
