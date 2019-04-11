@@ -32,26 +32,34 @@ function gen_uuid() {
 
 	error_log ("filename = ".$fileName);
 
+
+  $startCmd = "G21G90\n";
+  $cmd = "G0";
+  $cmdSpeed = "F10";
+
+
+  fwrite($myfile, $startCmd);
+
 	foreach ($tracks as &$track) {
 
 		$points =  explode("-", $track);
 
 		for ($i = 0; $i < count($points); $i = $i + 2) {
 
-		    error_log ("point ");
+		  error_log ("point ");
 			$x = $points[$i];
 			$y = $points[$i + 1];
 
 			if ($i == 0){
-				$command = "G90 G0 Z0X".$x."Y".$y."\n";
+				$command = $cmd."Z0"."X".$x."Y".$y.$cmdSpeed."\n";
 				fwrite($myfile, $command);
 			}
 
-			$command = "G90 G0 Z1X".$x."Y".$y."\n";
+      $command = $cmd."Z1"."X".$x."Y".$y.$cmdSpeed."\n";
 			fwrite($myfile, $command);
 
 			if ($i == count($points) - 2){
-				$command = "G90 G0 Z0X".$x."Y".$y."\n";
+        $command = $cmd."Z0"."X".$x."Y".$y.$cmdSpeed."\n";
 				fwrite($myfile, $command);
 			}
 		}

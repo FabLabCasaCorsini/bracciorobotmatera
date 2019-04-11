@@ -230,11 +230,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 
 
 
-        for (ArrayList<Point> l : lines){
+        // for (ArrayList<Point> l : lines){
+        for (ArrayList<FloatPoint> l : normalizedLines){
             if (strPoint.length() > 0)
                 strPoint += lineSeparator;
             String line = "";
-            for (Point p : l){
+            for (FloatPoint p : l){
                 if (line.length() > 0)
                     line += pointSeparator;
                 line += Float.toString(p.x) + pointSeparator + Float.toString(p.y);
