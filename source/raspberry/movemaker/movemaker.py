@@ -19,7 +19,6 @@ from DrawingJob import DrawingJob
 from GCodeProcessor import GCodeProcessor
 from CartMover import CartMover
 
-gcode_proc = GCodeProcessor()
 cart_mover = CartMover()
 
 DL_FOLDER_PATH = '/opt/fanny/Drawings/downloads/'
@@ -51,6 +50,8 @@ log_hdlr.setFormatter(formatter)
 logger.addHandler(log_hdlr)
 loglevel=eval('logging.DEBUG') #pronto per la gestione a stringa
 logger.setLevel(loglevel)
+
+gcode_proc = GCodeProcessor(logger)
 
 
 """
