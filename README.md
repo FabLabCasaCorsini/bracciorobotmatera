@@ -6,18 +6,18 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 
 ## Partecipanti:
 * Caterina Bonora
-* Lorenzo Vandelli
-* Alberto Trentadue
-* Andrea Forlani
-* Francesco Finotti
+* Alice Toni
 * Doriano Dalpiaz
+* Francesco Finotti
+* Lorenzo Vandelli
+* Luca Bazzucchi
+* Alberto Trentadue
+* Alessandro Appeddu
+* Andrea Forlani
 * Augusto Maffei
 * Francesco Annovi
-* Alessandro Appeddu
 * Nadir Abdelmjid
-* Luca Bazzucchi
 
 ## Descrizione del progetto
-
 
 http://www.casacorsini.mo.it/wp-content/uploads/2018/09/INTERABITAZIONE-condiviso-low.pdf
