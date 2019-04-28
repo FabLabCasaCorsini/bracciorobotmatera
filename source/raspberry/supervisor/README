@@ -1,0 +1,4 @@
+Folder di configurazione ed altri oggetti relativi al Supervisor:
+
+- supervisor: script di avvio del servizio Linux di supervisord (SysV)
+- superviosrd.conf: file di configurazione di supervisord

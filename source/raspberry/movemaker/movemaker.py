@@ -118,14 +118,19 @@ def processa_disegno(dwg):
 def main_task():
     global coda_drawings_dl, lista_drawings_fissa
 
-    #Inizializzazione connessione GCODE
-    try:
-        gcode_proc.connect()
-        logger.info('GCode Processor collegato.')
-    except:
-        # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
-        logger.error('Errore connessione GCode Processor:' + str(sys.exc_info()[1]) + '. Uscita.')
-        sys.exit(1)
+    #Inizializzazione connessione a GRBL
+    #in caso di mancanza della connessione seriale cicla fino
+    #al successo (permette l'avvio come servizio)
+    ser_conn = False
+    while keep_on and not ser_conn:
+        try:
+            gcode_proc.connect()
+            ser_conn = True
+            logger.info('GCode Processor collegato alla seriale.')
+        except:
+            # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
+            logger.error('Errore connessione GCode Processor:' + str(sys.exc_info()[1]) + '. Attesa...')
+            time.sleep(3)
 
     #Caricamento della lista dei disegni precaricati dalla directory
     carica_lista(lista_drawings_fissa, FIX_FOLDER_PATH)
