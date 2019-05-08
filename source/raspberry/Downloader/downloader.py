@@ -13,7 +13,8 @@ from logging.handlers import TimedRotatingFileHandler
 
 FOLDER_PATH = '/opt/fanny/Drawings/downloads/'
 BASE_URL = 'http://www.appius.it/matera/'
-GCODE_FOLDER = 'gcodes/'
+#GCODE_FOLDER = 'gcodes/'
+GCODE_FOLDER = 'getFile.php?file='
 FILE_LIST_URL = 'gcode_files'
 
 keep_on = True

@@ -9,8 +9,9 @@ import time,serial
 
 SERIAL_PORT = '/dev/ttyACM0'
 GRBL_SOFT_RESET = chr(24)
-GRBL_UNLOCK = '$X'
-GRBL_RESET_COORD_ZERO = 'G10 P0 L20 X0 Y0 Z0'
+GRBL_UNLOCK = '$X\n'
+GRBL_RESET_COORD_ZERO = 'G10 P0 L20 X0 Y0 Z0\n'
+GRBL_GO_HOME = '$H\n'
 
 class GCodeProcessor:
 
@@ -34,15 +35,18 @@ class GCodeProcessor:
     def unblock(self):
         #Soft reset
         self.serial_if.write(GRBL_SOFT_RESET.encode('ascii'))
+        time.sleep(1)
         #Unlock
         self.serial_if.write(GRBL_UNLOCK.encode('ascii'))
+        time.sleep(1)
 
     """
      Processa una lista di linee di comando GCODE.
      Se la scrittura seriale fallisce, si avrà un'eccezione
     """
     def process(self, command_lines):
-        #self.unblock()
+        self.unblock()
+        self.serial_if.write(GRBL_GO_HOME.encode('ascii'))
         self.serial_if.write(GRBL_RESET_COORD_ZERO.encode('ascii'))
         #Viene inviata ciascuna linea alla seriale, terminata da NEWLINE
         for linea in command_lines:
@@ -50,4 +54,4 @@ class GCodeProcessor:
             linea += '\n'
             self.serial_if.write(linea.encode('ascii'))
             self.serial_if.flush()
-            time.sleep(0.1)
+            #time.sleep(2)
