@@ -5,7 +5,7 @@ Classe GCodeProcessor
 La classe GCodeProcessor implementa l'interfaccia per l'esecuzione
 dei movimenti del braccio attraverso i comandi GCODE
 """
-import time, math
+import time
 from pathlib import Path
 import serial
 
@@ -15,7 +15,7 @@ GRBL_UNLOCK = '$X\n'
 GRBL_RESET_COORD_ZERO = 'G10 P0 L20 X0 Y0 Z0\n'
 GRBL_GO_HOME = '$H\n'
 #Numero di secondi da attendere per ogni unità di distanza
-DELAY_FOR_UNIT = 0.05 #TODO: tuning
+DELAY_FOR_UNIT = 0.2 #TODO: tuning
 
 class GCodeProcessor:
 
@@ -93,7 +93,7 @@ class GCodeProcessor:
      tra l'ultimo punto ed il successivo
     """
     def _delay_to_next_point(self, next_point):
-        d = math.hypot(self.last_point[0]-next_point[0], self.last_point[1]-next_point[1])
+        d = max(abs(self.last_point[0]-next_point[0]), abs(self.last_point[1]-next_point[1]))
         time.sleep(d*DELAY_FOR_UNIT)
 
     """
