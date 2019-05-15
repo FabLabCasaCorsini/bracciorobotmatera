@@ -13,6 +13,7 @@ Progetto collaborativo per la realizzazione di un braccio robotico in grado di r
 * Luca Bazzucchi
 * Alberto Trentadue
 * Alessandro Appeddu
+* Michele Tracquilio
 * Andrea Forlani
 * Augusto Maffei
 * Francesco Annovi
