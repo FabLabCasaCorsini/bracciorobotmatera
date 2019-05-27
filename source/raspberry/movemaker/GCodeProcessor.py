@@ -5,7 +5,7 @@ Classe GCodeProcessor
 La classe GCodeProcessor implementa l'interfaccia per l'esecuzione
 dei movimenti del braccio attraverso i comandi GCODE
 """
-import time
+import sys, time
 from pathlib import Path
 import serial
 
@@ -15,7 +15,9 @@ GRBL_UNLOCK = '$X\n'
 GRBL_RESET_COORD_ZERO = 'G10 P0 L20 X0 Y0 Z0\n'
 GRBL_GO_HOME = '$H\n'
 #Numero di secondi da attendere per ogni unità di distanza
-DELAY_FOR_UNIT = 0.2 #TODO: tuning
+DELAY_FOR_UNIT = 0.3 #TODO: tuning
+DRAWINGS_FOR_HOME = 2
+DELAY_FOR_HOMING = 20
 
 class GCodeProcessor:
 
@@ -24,8 +26,10 @@ class GCodeProcessor:
     """
     def __init__(self, log):
         self.serial_if = None
+        self.ser_conn = False
         self.log = log
         self.last_point = (0,0)
+        self.home_counter = 0
 
     """
      Individua il link di sistema alla prima porta seriale
@@ -47,8 +51,15 @@ class GCodeProcessor:
      Se la connessione non può essere stabilita, si avrà un'eccezione
     """
     def connect(self):
-        serial_port = self._find_serial()
-        self.serial_if = serial.Serial(port=serial_port, baudrate=115200)
+        self.ser_conn = False
+        while not self.ser_conn:
+            try:
+                serial_port = self._find_serial()
+                self.serial_if = serial.Serial(port=serial_port, baudrate=115200)
+                self.ser_conn = True
+                self.log.debug('collegato alla seriale.')
+            except:
+                self.log.error('Errore connessione GCode Processor:' + str(sys.exc_info()[1]) + '. Attesa...')
 
     """
      Resetta e sblocca il GRBL
@@ -69,7 +80,7 @@ class GCodeProcessor:
         rs=''
         for c in s:
             if c.isdigit() or c == '.':
-                rs.append(c)
+                rs += c
             else:
                 break
         return float(rs)
@@ -94,6 +105,8 @@ class GCodeProcessor:
     """
     def _delay_to_next_point(self, next_point):
         d = max(abs(self.last_point[0]-next_point[0]), abs(self.last_point[1]-next_point[1]))
+        delay = d * DELAY_FOR_UNIT
+        self.log.debug('pausa di ' + str(delay))
         time.sleep(d*DELAY_FOR_UNIT)
 
     """
@@ -101,22 +114,37 @@ class GCodeProcessor:
      Se la scrittura seriale fallisce, si avrà un'eccezione
     """
     def process(self, command_lines):
-        self.unblock()
-        self.serial_if.write(GRBL_GO_HOME.encode('ascii'))        
-        self._delay_to_next_point((0,0))
-        time.sleep(3)
-        self.serial_if.write(GRBL_RESET_COORD_ZERO.encode('ascii'))
-        self.last_point = (0,0)
-        #Viene inviata ciascuna linea alla seriale, terminata da NEWLINE
-        for linea in command_lines:
-            self.log.debug('LINEA GCODE:'+linea)
-            linea += '\n'
-            self.serial_if.write(linea.encode('ascii'))
-            self.serial_if.flush()            
-            if linea.startswith('G0'):
-                #Introduce un ritardo propozionale alla distanza
-                next_point = self._next_gcode_point(linea)
-                self._delay_to_next_point(next_point)
-                self.last_point = next_point
-                
-                
+        self.connect()
+        if self.ser_conn:
+            self.unblock()
+            self.log.debug('Home Counter:'+str(self.home_counter))
+            self.log.debug('Esecuzione HOMING')
+            self.serial_if.write(GRBL_GO_HOME.encode('ascii'))        
+            #self._delay_to_next_point((0,0))
+            time.sleep(DELAY_FOR_HOMING)
+            self.serial_if.write(GRBL_RESET_COORD_ZERO.encode('ascii'))
+            self.last_point = (0,0)
+            #Viene inviata ciascuna linea alla seriale, terminata da NEWLINE
+            for linea in command_lines:
+                self.log.debug('LINEA GCODE:'+linea)
+                linea += '\n'
+                self.serial_if.write(linea.encode('ascii'))
+                self.serial_if.flush() 
+                if linea.startswith('G0'):
+                    #Introduce un ritardo propozionale alla distanza
+                    next_point = self._next_gcode_point(linea)
+                    self._delay_to_next_point(next_point)
+                    self.last_point = next_point
+                else:
+                    time.sleep(0.4)
+
+            #Assicura lo spegnimento del led a fine disegno
+            self.serial_if.write('M5\n'.encode('ascii'))
+            self.serial_if.flush()
+            time.sleep(0.4)
+
+            #self.home_counter = (self.home_counter + 1) % DRAWINGS_FOR_HOME
+            time.sleep(10)
+            self.serial_if.close()
+            self.serial_if = None
+            self.ser_conn = False

@@ -20,6 +20,7 @@ from GCodeProcessor import GCodeProcessor
 from CartMover import CartMover
 
 cart_mover = CartMover()
+cart_mover.load_last_position()
 
 DL_FOLDER_PATH = '/opt/fanny/Drawings/downloads/'
 FIX_FOLDER_PATH = '/opt/fanny/Drawings/staged/'
@@ -118,24 +119,12 @@ def processa_disegno(dwg):
 def main_task():
     global coda_drawings_dl, lista_drawings_fissa
 
-    #Inizializzazione connessione a GRBL
-    #in caso di mancanza della connessione seriale cicla fino
-    #al successo (permette l'avvio come servizio)
-    ser_conn = False
-    while keep_on and not ser_conn:
-        try:
-            gcode_proc.connect()
-            ser_conn = True
-            logger.info('GCode Processor collegato alla seriale.')
-        except:
-            # In caso di errore il programma esce. Il riavvio può provare a ricollegare la seriale
-            logger.error('Errore connessione GCode Processor:' + str(sys.exc_info()[1]) + '. Attesa...')
-            time.sleep(3)
-
     #Caricamento della lista dei disegni precaricati dalla directory
     carica_lista(lista_drawings_fissa, FIX_FOLDER_PATH)
     NUM_DWGS_LISTA_FISSA = len(lista_drawings_fissa)
     indice_lista_fissa = 0
+
+    time.sleep(10)
 
     while keep_on:
         #Caricamento della coda dei disegni dalla directory dei downloads
@@ -162,7 +151,7 @@ def main_task():
             indice_lista_fissa += 1
             indice_lista_fissa %= NUM_DWGS_LISTA_FISSA
 
-        time.sleep(3)
+        time.sleep(60)
 
 #Avvio del task principale.
 logger.info('Avvio di Fanny.MoveMaker')
