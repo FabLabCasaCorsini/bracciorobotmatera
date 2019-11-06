@@ -49,7 +49,7 @@ void loop() {
     stato_moto = nuovo_stato;
     attua_stato(stato_moto);
   }
-  delay(750);
+  delay(100);
 }
 
 /**
@@ -92,7 +92,7 @@ void leggi_comando(void)
   byte cfwd = digitalRead(CONTROL_FWD);
   byte cbwd = digitalRead(CONTROL_BWD);
 
-  //Nota: questo caso comprende anche il caso ALTO-ALTO
+  //Nota: questo caso comprende anche il caso BASSO-BASSO
   if (cfwd == LOW) {
     nuovo_stato = AVANTI;
     return;
@@ -105,4 +105,3 @@ void leggi_comando(void)
 
   nuovo_stato = STOP;
 }
-

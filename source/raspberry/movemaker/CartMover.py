@@ -26,8 +26,8 @@ TIME_STEP = 0.5
 STEPS = 36
 # Importante che steps sia divisibile per NUMPOSITIONS-1 
 STEPS_SHORT = int(STEPS / (NUM_POSITIONS-1))
-#Fattore di abbreviazione del tempo di ritorno in posizione A
-REVERSE_CORRECTION = 0.97
+#Fattore di modifica del tempo di ritorno in posizione A
+REVERSE_CORRECTION = 1
 
 class CartMover:
     
@@ -85,7 +85,7 @@ class CartMover:
             nsteps = STEPS            
             
         for i in range(nsteps):
-            #Correzione temporanea per il ritorno
+            #Correzione per il ritorno
             if target_pos > 0:
                 time.sleep(TIME_STEP)
             else:
