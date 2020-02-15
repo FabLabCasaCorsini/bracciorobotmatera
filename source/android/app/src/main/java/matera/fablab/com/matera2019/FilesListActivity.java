@@ -11,10 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.apache.http.NameValuePair;
-
-import java.util.List;
-
 public class FilesListActivity extends Activity {
 
     Context _context;

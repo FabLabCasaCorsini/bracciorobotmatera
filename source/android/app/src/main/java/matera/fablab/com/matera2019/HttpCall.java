@@ -1,9 +1,6 @@
 package matera.fablab.com.matera2019;
 
 import android.content.Context;
-import android.util.Base64;
-
-import com.google.api.client.http.HttpResponse;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
