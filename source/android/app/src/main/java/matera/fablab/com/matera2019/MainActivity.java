@@ -113,24 +113,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
                             public void onClick(DialogInterface dialog, int whichButton) {
 
 
-                                AlertDialog.Builder builder = new AlertDialog.Builder(_context);
-                                builder.setTitle("Inserisci un titolo");
-
-                                final EditText input = new EditText(_context);
-                                input.setInputType(InputType.TYPE_CLASS_TEXT);
-                                builder.setView(input);
-
                                 if (_fileName != ""){
                                     saveWithName(_fileName);
                                 }
                                 else {
+
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+                                    builder.setTitle("Inserisci un titolo");
+
+                                    final EditText input = new EditText(_context);
+                                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                                    builder.setView(input);
+
                                     builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
                                             final String title = input.getText().toString();
 
                                             saveWithName(title);
-
+                                            _fileName = title;
                                         }
                                     });
                                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -196,8 +197,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 
         ArrayList<ArrayList<Point>> lines = mySurfaceView.getPicture();
 
-        int dimensioneX = 100;
-        int dimensioneY = 100;
+        int dimensioneX = 80;
+        int dimensioneY = 80;
 
         int maxValueX = 0;
         int maxValueY = 0;
@@ -213,18 +214,46 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
             }
         }
 
+        int linesCount = 0;
         ArrayList<ArrayList<FloatPoint>> normalizedLines = new ArrayList<>();
+        ArrayList<ArrayList<FloatPoint>> normalLines = new ArrayList<>();
+
+        int maxValue = Math.max(maxValueX, maxValueY);
+        int minValue = Math.min(minValueX, minValueY);
+
         for (ArrayList<Point> line : lines) {
+
             ArrayList<FloatPoint> normalizedLine = new ArrayList<>();
+            ArrayList<FloatPoint> normalLine = new ArrayList<>();
+
             for (Point p : line){
+
+                FloatPoint normalPoint = new FloatPoint();
                 FloatPoint normalizedPoint = new FloatPoint();
-                normalizedPoint.x = ((float)(p.x - minValueX) / (maxValueX - minValueX)) * dimensioneX;
-                normalizedPoint.y = ((float)(p.y - minValueY) / (maxValueY - minValueY)) * dimensioneY;
+
+                normalPoint.x = p.x;
+                normalPoint.y = p.y;
+
+                normalizedPoint.x = ((float)(p.x - minValueX) / (maxValue - minValue)) * dimensioneX;
+                normalizedPoint.y = ((float)(p.y - minValueY) / (maxValue - minValue)) * dimensioneY;
+
+                normalLine.add(normalPoint);
                 normalizedLine.add(normalizedPoint);
             }
-            normalizedLines.add(normalizedLine);
-        }
 
+            /*
+            if (linesCount == lines.size() -1){
+                FloatPoint normalizedPoint = new FloatPoint();
+                normalizedPoint.x = 0;
+                normalizedPoint.y = 0;
+                normalizedLine.add(normalizedPoint);
+            }
+*/
+            normalizedLines.add(normalizedLine);
+            normalLines.add(normalLine);
+
+            linesCount++;
+        }
 
         String strPoint = "";
 
@@ -253,6 +282,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
         nameValuePairs.add(new BasicNameValuePair("title", title));
         nameValuePairs.add(new BasicNameValuePair("points", strPoint));
         nameValuePairs.add(new BasicNameValuePair("fileName", fileToServer));
+        nameValuePairs.add(new BasicNameValuePair("format", "gcode"));
 
         Thread networkThread = new Thread(){
 
@@ -264,6 +294,47 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
         };
 
         networkThread.start();
+
+
+
+
+
+
+
+
+
+        strPoint = "";
+
+        for (ArrayList<FloatPoint> l : normalLines){
+            if (strPoint.length() > 0)
+                strPoint += lineSeparator;
+            String line = "";
+            for (FloatPoint p : l){
+                if (line.length() > 0)
+                    line += pointSeparator;
+                line += Float.toString(p.x) + pointSeparator + Float.toString(p.y);
+            }
+            strPoint += line;
+        }
+
+
+
+        final List<NameValuePair> nameValuePairs2 = new ArrayList<>();
+        nameValuePairs2.add(new BasicNameValuePair("title", title));
+        nameValuePairs2.add(new BasicNameValuePair("points", strPoint));
+        nameValuePairs2.add(new BasicNameValuePair("fileName", fileToServer));
+        nameValuePairs2.add(new BasicNameValuePair("format", "coord"));
+
+        Thread networkThread2 = new Thread(){
+
+            @Override
+            public void run() {
+                super.run();
+                HttpCall.loadUrl(_context, urlSave, nameValuePairs2);
+            }
+        };
+
+        networkThread2.start();
 
     }
 
