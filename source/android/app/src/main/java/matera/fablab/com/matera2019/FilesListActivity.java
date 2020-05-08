@@ -43,13 +43,13 @@ public class FilesListActivity extends Activity {
                         @Override
                         public void run() {
 
-                            String splittedLine[] = line.split("-_-");
-                            String fileName = splittedLine[0];
+                            String fileName = line;
 
                             LayoutInflater inflater = (LayoutInflater)getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                             RelativeLayout textItemView = (RelativeLayout) inflater.inflate(R.layout.file_item, null);
 
                             TextView textView = textItemView.findViewById(R.id.textItem);
+                            fileName = fileName.replace(".gcode", "");
                             textView.setText(fileName);
 
                             filesListLayout.addView(textItemView);

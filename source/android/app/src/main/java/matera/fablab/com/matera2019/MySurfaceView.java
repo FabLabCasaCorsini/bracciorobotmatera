@@ -40,6 +40,7 @@ public class MySurfaceView extends SurfaceView {
 
             ArrayList<Point> tmpLine = new ArrayList<>();
             String points[] = line.split("-");
+            tmpLine.clear();
             for(int i = 0; i < points.length; i += 2){
 
                 try {
