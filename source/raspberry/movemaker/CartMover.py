@@ -14,10 +14,8 @@ NUM_POSITIONS = len(POSITIONS)
 
 LAST_POS_FILE = '/opt/fanny/movemaker/lastpos'
 
-PIN_A_SX = DigitalOutputDevice(17) # GPIO17 - PIN 11 - sesta fila SX
-PIN_B_SX = DigitalOutputDevice(18) # GPIO18 - PIN 12 - sesta fila DX
-PIN_A_DX = DigitalOutputDevice(22) # GPIO22 - PIN 15 - ottava fila SX
-PIN_B_DX = DigitalOutputDevice(23) # GPIO23 - PIN 16 - ottava fila DX
+PIN_EN_MOV = DigitalOutputDevice(17) # GPIO17 - PIN 11 - sesta fila SX
+PIN_DIR_MOV = DigitalOutputDevice(18) # GPIO18 - PIN 12 - sesta fila DX
 
 # Passo di controllo ed eventuale modifica del livello dei pin
 TIME_STEP = 0.5
@@ -37,11 +35,9 @@ class CartMover:
     def __init__(self):
         # Sono previste due posizioni        
         self.cart_position = 0
-        # Tutti i pin inizializzati a on 
-        PIN_A_SX.on()
-        PIN_B_SX.on()
-        PIN_A_DX.on()
-        PIN_B_DX.on()
+        # Tutti i pin inizializzati a off 
+        PIN_EN_MOV.off()
+        PIN_DIR_MOV.off()
         
     """
      Legge l'ultima posizione in cui si trovava il cart dopo
@@ -76,12 +72,12 @@ class CartMover:
     def _seq_movement(self, target_pos):        
         # All'ingresso della funzione, tutti i pin sono a on        
         if target_pos > 0:
-            PIN_A_SX.off()
-            PIN_A_DX.off()
+            PIN_EN_MOV.on()
+            PIN_DIR_MOV.off()
             nsteps = STEPS_SHORT
         else:
-            PIN_B_SX.off()
-            PIN_B_DX.off()
+            PIN_EN_MOV.on()
+            PIN_DIR_MOV.on()
             nsteps = STEPS            
             
         for i in range(nsteps):
@@ -92,10 +88,8 @@ class CartMover:
                 time.sleep(TIME_STEP*REVERSE_CORRECTION)
         
         # Tutti i pin tornano a spento
-        PIN_A_SX.on()
-        PIN_B_SX.on()
-        PIN_A_DX.on()
-        PIN_B_DX.on() 
+        PIN_EN_MOV.off()
+        PIN_DIR_MOV.off()
     
     """
      Muove il carrello in una delle due posizioni alternativamente
@@ -117,8 +111,6 @@ class CartMover:
      Rilascia le risorse HW
     """
     def releaseHW(self):
-        PIN_A_SX.close()
-        PIN_B_SX.close()
-        PIN_A_DX.close()
-        PIN_B_DX.close()         
+        PIN_EN_MOV.close()
+        PIN_DIR_MOV.close()
 
